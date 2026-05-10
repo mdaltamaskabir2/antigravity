@@ -8,15 +8,20 @@ export default function AboutAuthor() {
 
   useEffect(() => {
     async function load() {
-      const data = await getAboutAuthor();
-      if (data) {
-        const { getSignedUrl } = await import('../lib/db');
-        setAuthor({
-          ...data,
-          profilePic: await getSignedUrl(data.profilePic)
-        });
+      try {
+        const data = await getAboutAuthor();
+        if (data) {
+          const { getSignedUrl } = await import('../lib/db');
+          setAuthor({
+            ...data,
+            profilePic: await getSignedUrl(data.profilePic)
+          });
+        }
+      } catch (error) {
+        console.error("AboutAuthor load error:", error);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     }
     load();
   }, []);

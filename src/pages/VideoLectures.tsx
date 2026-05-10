@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getLectures, getSyllabusUnits } from '../lib/db';
+import { getLectures, getSyllabusUnits, getSignedUrl } from '../lib/db';
 import ReactPlayer from 'react-player';
 const Player: any = ReactPlayer;
 
@@ -27,15 +27,20 @@ export default function VideoLectures() {
 
   useEffect(() => {
     async function fetchData() {
-      const dbUnits = await getSyllabusUnits();
-      setUnits(dbUnits);
-      const fetched = await getLectures();
-      const lecturesWithUrls = await Promise.all(fetched.map(async (l: any) => ({
-        ...l,
-        videoUrl: await getSignedUrl(l.videoUrl)
-      })));
-      setLectures(lecturesWithUrls);
-      setLoading(false);
+      try {
+        const dbUnits = await getSyllabusUnits();
+        setUnits(dbUnits);
+        const fetched = await getLectures();
+        const lecturesWithUrls = await Promise.all(fetched.map(async (l: any) => ({
+          ...l,
+          videoUrl: await getSignedUrl(l.videoUrl)
+        })));
+        setLectures(lecturesWithUrls);
+      } catch (error) {
+        console.error("Lectures fetchData error:", error);
+      } finally {
+        setLoading(false);
+      }
     }
     fetchData();
   }, []);

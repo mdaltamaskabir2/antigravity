@@ -10,9 +10,14 @@ export default function Syllabus() {
 
   useEffect(() => {
     async function fetchUnits() {
-      const fetchedUnits = await getSyllabusUnits();
-      setUnits(fetchedUnits);
-      setLoading(false);
+      try {
+        const fetchedUnits = await getSyllabusUnits();
+        setUnits(fetchedUnits);
+      } catch (error) {
+        console.error("Syllabus fetch error:", error);
+      } finally {
+        setLoading(false);
+      }
     }
     fetchUnits();
   }, []);

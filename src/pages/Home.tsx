@@ -10,16 +10,23 @@ export default function Home() {
   const [questionText, setQuestionText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitMessage, setSubmitMessage] = useState('');
+  const [loading, setLoading] = useState(true);
   const { currentUser } = useAuth();
 
   useEffect(() => {
     async function fetchData() {
-      const dbUnits = await getSyllabusUnits();
-      setUnits(dbUnits);
-      const notes = await getNotes();
-      setRecentNotes(notes.slice(0, 4));
-      const fetchedFaqs = await getFaqs();
-      setFaqs(fetchedFaqs.filter((f: any) => f.status === 'published' || f.answer));
+      try {
+        const dbUnits = await getSyllabusUnits();
+        setUnits(dbUnits);
+        const notes = await getNotes();
+        setRecentNotes(notes.slice(0, 4));
+        const fetchedFaqs = await getFaqs();
+        setFaqs(fetchedFaqs.filter((f: any) => f.status === 'published' || f.answer));
+      } catch (error) {
+        console.error("Home fetchData error:", error);
+      } finally {
+        setLoading(false);
+      }
     }
     fetchData();
   }, []);
@@ -62,8 +69,15 @@ export default function Home() {
           <p className="text-[16px] text-on-surface-variant">The latest curated resources for your psychological journey</p>
         </div>
         <div className="max-w-[1200px] mx-auto px-gutter grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-md">
-          {recentNotes.length === 0 ? (
-            <div className="col-span-1 md:col-span-2 lg:col-span-4 text-center text-on-surface-variant py-8">Loading recent notes...</div>
+          {loading ? (
+            <div className="col-span-1 md:col-span-2 lg:col-span-4 text-center py-8">
+              <span className="material-symbols-outlined animate-spin text-3xl text-secondary">progress_activity</span>
+              <p className="mt-2 text-on-surface-variant">Loading recent notes...</p>
+            </div>
+          ) : recentNotes.length === 0 ? (
+            <div className="col-span-1 md:col-span-2 lg:col-span-4 text-center text-on-surface-variant py-8 bg-surface rounded-xl border border-outline-variant">
+              No recent notes published yet.
+            </div>
           ) : recentNotes.map(note => (
             <div key={note.id} className="bg-white border border-outline-variant p-md rounded-xl transition-all duration-300 ambient-shadow-hover flex flex-col h-full">
               <div className="mb-sm"><span className="bg-secondary-container text-[#005047] px-sm py-xs rounded-full text-xs font-medium truncate max-w-full inline-block">{getUnitName(note.unitId)}</span></div>

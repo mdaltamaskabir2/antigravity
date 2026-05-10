@@ -8,9 +8,14 @@ export default function FAQ() {
 
   useEffect(() => {
     async function loadFaqs() {
-      const dbFaqs = await getFaqs();
-      setFaqs(dbFaqs);
-      setLoading(false);
+      try {
+        const dbFaqs = await getFaqs();
+        setFaqs(dbFaqs);
+      } catch (error) {
+        console.error("FAQ load error:", error);
+      } finally {
+        setLoading(false);
+      }
     }
     loadFaqs();
   }, []);
