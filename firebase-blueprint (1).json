@@ -1,0 +1,144 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile with role",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" },
+        "name": { "type": "string" },
+        "role": { "type": "string", "enum": ["student", "admin"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["email", "role"]
+    },
+    "SiteSettings": {
+      "title": "Site Settings",
+      "description": "Global site configuration",
+      "type": "object",
+      "properties": {
+        "linkedin": { "type": "string" },
+        "youtube": { "type": "string" },
+        "privacyPolicy": { "type": "string" },
+        "termsOfService": { "type": "string" },
+        "aboutAuthor": { "type": "string" },
+        "contactUs": { "type": "string" }
+      }
+    },
+    "SyllabusUnit": {
+      "title": "Syllabus Unit",
+      "description": "A syllabus unit or module",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title"]
+    },
+    "Note": {
+      "title": "Study Note",
+      "description": "A study note resource",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "maxLength": 200 },
+        "unitId": { "type": "string" },
+        "category": { "type": "string" },
+        "description": { "type": "string", "maxLength": 5000 },
+        "freeContent": { "type": "string" },
+        "imageUrl": { "type": "string", "maxLength": 1000 },
+        "isPremium": { "type": "boolean" },
+        "price": { "type": "string", "maxLength": 50 },
+        "paymentLink": { "type": "string", "maxLength": 1000 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "description"]
+    },
+    "Lecture": {
+      "title": "Video Lecture",
+      "description": "Video lecture resource",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "videoUrl": { "type": "string" },
+        "description": { "type": "string" },
+        "unitId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "videoUrl"]
+    },
+    "FAQ": {
+      "title": "FAQ",
+      "description": "Frequently answered question",
+      "type": "object",
+      "properties": {
+        "question": { "type": "string" },
+        "answer": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["question", "answer"]
+    },
+    "Doubt": {
+      "title": "Doubt",
+      "description": "Student doubt",
+      "type": "object",
+      "properties": {
+        "studentId": { "type": "string" },
+        "studentName": { "type": "string" },
+        "question": { "type": "string" },
+        "linkedUnitId": { "type": "string" },
+        "answer": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "answered"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["studentId", "question", "status"]
+    },
+    "Transaction": {
+      "title": "Transaction",
+      "description": "UPI Payment Transaction",
+      "type": "object",
+      "properties": {
+        "studentId": { "type": "string" },
+        "noteId": { "type": "string" },
+        "transactionRef": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["studentId", "noteId", "transactionRef", "status"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "User profiles"
+    },
+    "/site_settings/global": {
+      "schema": { "$ref": "#/entities/SiteSettings" },
+      "description": "Global settings"
+    },
+    "/syllabus/{unitId}": {
+      "schema": { "$ref": "#/entities/SyllabusUnit" },
+      "description": "Syllabus units"
+    },
+    "/notes/{noteId}": {
+      "schema": { "$ref": "#/entities/Note" },
+      "description": "Study notes"
+    },
+    "/lectures/{lectureId}": {
+      "schema": { "$ref": "#/entities/Lecture" },
+      "description": "Video lectures"
+    },
+    "/faqs/{faqId}": {
+      "schema": { "$ref": "#/entities/FAQ" },
+      "description": "FAQs"
+    },
+    "/doubts/{doubtId}": {
+      "schema": { "$ref": "#/entities/Doubt" },
+      "description": "Student doubts"
+    },
+    "/transactions/{transactionId}": {
+      "schema": { "$ref": "#/entities/Transaction" },
+      "description": "Payment transactions"
+    }
+  }
+}

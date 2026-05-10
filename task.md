@@ -1,0 +1,32 @@
+# Implementation Tasks
+
+- `[ ]` **1. Navigation & Header Restructuring**
+  - `[ ]` Update `Navbar.tsx` navigation order.
+  - `[ ]` Remove "Ask Doubt" CTA from `Syllabus.tsx`.
+- `[ ]` **2. Homepage Enhancements**
+  - `[ ]` Link "Explore Notes" to `/study-notes`.
+  - `[ ]` Implement dynamic 4 recent notes grid.
+  - `[ ]` Remove "Coming Soon" section.
+- `[ ]` **3. Doubts & Contact Modules**
+  - `[ ]` Rename "Admin" references to "Course Instructor".
+  - `[ ]` Update doubts feed to show public doubts with unit tags.
+  - `[ ]` Update `Footer.tsx` (Newsletter to Notes Update Notification, Connect alignment).
+- `[ ]` **4. Backend Model Updates (`db.ts`)**
+  - `[ ]` Add `qaPdfLink` and `qaFreeContent` handling to `addNote`/`updateNote`.
+  - `[ ]` Update Doubts API for community feed.
+- `[ ]` **5. Q&A and Study Notes Logic**
+  - `[ ]` Update `SecurePdfViewer` with Download capability.
+  - `[ ]` Update `StudyNotes.tsx` for new viewer.
+  - `[ ]` Completely rewrite `QA.tsx` for Unit-based Q&A PDFs.
+  - `[ ]` Create `FAQ.tsx` (or integrate existing FAQ logic properly if needed; wait, I'll put it on the new FAQ page).
+- `[ ]` **6. Payment Gateway Integration**
+  - `[ ]` Integrate Razorpay script in `StudyNotes` & `QA`.
+  - `[ ]` Connect successful payment to `submitTransaction` / instant unlock.
+- `[ ]` **7. Video Lectures System**
+  - `[ ]` Group videos by unit in `VideoLectures.tsx`.
+  - `[ ]` Implement Accordion UI with `react-player`.
+- `[ ]` **8. Admin Panel Updates**
+  - `[ ]` Remove manual payment verification.
+  - `[ ]` Add Q&A PDF fields to Notes form.
+  - `[ ]` Add FAQ Manager editing capabilities.
+  - `[ ]` Handle Private Doubts flow properly.

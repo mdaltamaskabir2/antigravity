@@ -1,0 +1,66 @@
+@import "tailwindcss";
+
+@theme {
+  --color-surface: #f8f9ff;
+  --color-surface-dim: #cbdbf5;
+  --color-surface-bright: #f8f9ff;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #eff4ff;
+  --color-surface-container: #e5eeff;
+  --color-surface-container-high: #dce9ff;
+  --color-surface-container-highest: #d3e4fe;
+  --color-on-surface: #0b1c30;
+  --color-on-surface-variant: #44474d;
+  --color-inverse-surface: #213145;
+  --color-inverse-on-surface: #eaf1ff;
+  --color-outline: #74777e;
+  --color-outline-variant: #c4c6ce;
+  --color-surface-tint: #4c5f7e;
+  
+  --color-primary: #1a2e4a;
+  --color-primary-container: #021934;
+  --color-secondary: #4a9b8e;
+  --color-secondary-container: #a1f2e2;
+  --color-on-secondary-container: #157165;
+  
+  --color-tertiary: #241700;
+  --color-on-tertiary: #ffffff;
+  --color-tertiary-container: #3e2a01;
+  --color-on-tertiary-container: #af915d;
+  
+  --color-error: #ba1a1a;
+  --color-on-error: #ffffff;
+  --color-error-container: #ffdad6;
+  --color-on-error-container: #93000a;
+
+  --color-background: #f8f9ff;
+  --color-on-background: #0b1c30;
+
+  --spacing-base: 8px;
+  --spacing-xs: 4px;
+  --spacing-sm: 12px;
+  --spacing-md: 24px;
+  --spacing-lg: 48px;
+  --spacing-xl: 80px;
+  --spacing-container-max: 1200px;
+  --spacing-gutter: 24px;
+  --spacing-reading-width: 720px;
+  
+  --font-inter: "Inter", sans-serif;
+}
+
+@layer utilities {
+  .ambient-shadow-hover:hover {
+    box-shadow: 0px 4px 20px rgba(2, 25, 52, 0.05);
+  }
+  .ambient-shadow {
+    box-shadow: 0px 4px 20px rgba(2, 25, 52, 0.05);
+  }
+  .academic-callout {
+    border-left: 4px solid #021934;
+  }
+}
+
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
