@@ -9,7 +9,13 @@ export default function AboutAuthor() {
   useEffect(() => {
     async function load() {
       const data = await getAboutAuthor();
-      if (data) setAuthor(data);
+      if (data) {
+        const { getSignedUrl } = await import('../lib/db');
+        setAuthor({
+          ...data,
+          profilePic: await getSignedUrl(data.profilePic)
+        });
+      }
       setLoading(false);
     }
     load();

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { getNotes, submitTransaction, getMyVerifiedTransactions, getSyllabusUnits } from '../lib/db';
+import { getNotes, submitTransaction, getMyVerifiedTransactions, getSyllabusUnits, getSignedUrl } from '../lib/db';
 import { useAuth } from '../contexts/AuthContext';
 import { Link, useLocation } from 'react-router-dom';
 import { Document, Page, pdfjs } from 'react-pdf';
@@ -153,7 +153,14 @@ export default function StudyNotes() {
     async function fetchData() {
       try {
         const fetchedUnits = await getSyllabusUnits(); setUnits(fetchedUnits);
-        const fetchedNotes = await getNotes(); setNotes(fetchedNotes as Note[]);
+        const fetchedNotes = await getNotes(); 
+        const notesWithUrls = await Promise.all(fetchedNotes.map(async (n: any) => ({
+          ...n,
+          imageUrl: await getSignedUrl(n.imageUrl),
+          paymentLink: await getSignedUrl(n.paymentLink),
+          qaPdfLink: await getSignedUrl(n.qaPdfLink)
+        })));
+        setNotes(notesWithUrls as Note[]);
         if (currentUser) {
           const vTx = await getMyVerifiedTransactions(currentUser.id);
           setVerifiedNotes(new Set(vTx.map((t: any) => t.noteId)));

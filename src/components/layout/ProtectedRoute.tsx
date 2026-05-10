@@ -8,7 +8,7 @@ interface ProtectedRouteProps {
 }
 
 export default function ProtectedRoute({ children, adminOnly = false }: ProtectedRouteProps) {
-  const { currentUser, loading, isAdmin } = useAuth();
+  const { currentUser, loading, isAdmin, userProfile } = useAuth();
 
   if (loading) {
     return (
@@ -24,6 +24,7 @@ export default function ProtectedRoute({ children, adminOnly = false }: Protecte
   }
 
   if (adminOnly && !isAdmin) {
+    console.log("Access Denied: User is not admin", { email: currentUser?.email, role: userProfile?.role });
     return (
       <div className="flex flex-col items-center justify-center min-h-[calc(100vh-200px)] p-8">
         <span className="material-symbols-outlined text-error text-[64px] mb-4">lock</span>

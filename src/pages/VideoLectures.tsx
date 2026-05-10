@@ -30,7 +30,11 @@ export default function VideoLectures() {
       const dbUnits = await getSyllabusUnits();
       setUnits(dbUnits);
       const fetched = await getLectures();
-      setLectures(fetched);
+      const lecturesWithUrls = await Promise.all(fetched.map(async (l: any) => ({
+        ...l,
+        videoUrl: await getSignedUrl(l.videoUrl)
+      })));
+      setLectures(lecturesWithUrls);
       setLoading(false);
     }
     fetchData();

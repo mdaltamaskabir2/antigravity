@@ -14,6 +14,58 @@ export function handleSupabaseError(error: any, operationType: OperationType, pa
   throw new Error(error.message || 'An error occurred with Supabase.');
 }
 
+// Storage Helpers
+export const BUCKET_NAME = 'app-files';
+
+export const uploadToStorage = async (file: File, featureName: string, itemId: string) => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('User not authenticated');
+
+    const extension = file.name.split('.').pop();
+    const uuid = Math.random().toString(36).substring(2, 15);
+    const fileName = `${uuid}.${extension}`;
+    const filePath = `${user.id}/${featureName}/${itemId}/${fileName}`;
+
+    const { error } = await supabase.storage
+      .from(BUCKET_NAME)
+      .upload(filePath, file);
+
+    if (error) throw error;
+    return filePath;
+  } catch (error) {
+    handleSupabaseError(error, OperationType.WRITE, 'storage');
+    return '';
+  }
+};
+
+export const getSignedUrl = async (path: string) => {
+  if (!path) return '';
+  if (path.startsWith('http')) return path; // Already a URL
+  try {
+    const { data, error } = await supabase.storage
+      .from(BUCKET_NAME)
+      .createSignedUrl(path, 3600); // 1 hour expiry
+    if (error) throw error;
+    return data.signedUrl;
+  } catch (error) {
+    console.error('Error creating signed URL:', error);
+    return '';
+  }
+};
+
+export const deleteFromStorage = async (path: string) => {
+  if (!path || path.startsWith('http')) return;
+  try {
+    const { error } = await supabase.storage
+      .from(BUCKET_NAME)
+      .remove([path]);
+    if (error) throw error;
+  } catch (error) {
+    console.error('Error deleting from storage:', error);
+  }
+};
+
 // FAQs
 export const getFaqs = async () => {
   try {
@@ -58,6 +110,18 @@ export const deleteFaq = async (faqId: string) => {
     if (error) throw error;
   } catch (error) {
     handleSupabaseError(error, OperationType.DELETE, `faqs/${faqId}`);
+  }
+};
+
+export const answerFaq = async (faqId: string, answer: string) => {
+  try {
+    const { error } = await supabase
+      .from('faqs')
+      .update({ answer, status: 'published', updatedAt: new Date().toISOString() })
+      .eq('id', faqId);
+    if (error) throw error;
+  } catch (error) {
+    handleSupabaseError(error, OperationType.UPDATE, `faqs/${faqId}`);
   }
 };
 
@@ -221,25 +285,25 @@ export const updateSiteSettings = async (data: any) => {
 export const getAboutAuthor = async () => {
   try {
     const { data, error } = await supabase
-      .from('site_settings')
+      .from('about_author')
       .select('*')
       .eq('id', 'about_author')
       .single();
     if (error && error.code !== 'PGRST116') throw error;
     return data;
   } catch (error) {
-    handleSupabaseError(error, OperationType.GET, 'site_settings/about_author');
+    handleSupabaseError(error, OperationType.GET, 'about_author/main');
   }
 };
 
 export const updateAboutAuthor = async (data: any) => {
   try {
     const { error } = await supabase
-      .from('site_settings')
+      .from('about_author')
       .upsert({ id: 'about_author', ...data });
     if (error) throw error;
   } catch (error) {
-    handleSupabaseError(error, OperationType.WRITE, 'site_settings/about_author');
+    handleSupabaseError(error, OperationType.WRITE, 'about_author/main');
   }
 };
 

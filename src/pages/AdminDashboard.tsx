@@ -10,10 +10,11 @@ import {
   addNote, addLecture, getLectures, updateLecture, deleteLecture,
   getSiteSettings, updateSiteSettings,
   getAboutAuthor, updateAboutAuthor,
-  addFaq, updateFaq, deleteFaq, getFaqs,
+  addFaq, updateFaq, deleteFaq, getFaqs, answerFaq,
   getAllAdminDoubts, answerDoubt, deleteDoubt, updateDoubt, getCommunityDoubts,
   getPendingTransactions, updateTransactionStatus, uploadFile, getNotes, updateNote, deleteNote,
-  getQas, addQa, updateQa, deleteQa
+  getQas, addQa, updateQa, deleteQa,
+  uploadToStorage, getSignedUrl, deleteFromStorage
 } from '../lib/db';
 
 export default function AdminDashboard() {
@@ -66,19 +67,41 @@ export default function AdminDashboard() {
       setUnits(fetchedUnits);
 
       const fetchedNotes = await getNotes();
-      setNotes(fetchedNotes);
+      // Resolve signed URLs for notes
+      const notesWithUrls = await Promise.all(fetchedNotes.map(async (n: any) => ({
+        ...n,
+        imageUrl: await getSignedUrl(n.imageUrl),
+        paymentLink: await getSignedUrl(n.paymentLink),
+        qaPdfLink: await getSignedUrl(n.qaPdfLink)
+      })));
+      setNotes(notesWithUrls);
 
       const fetchedLectures = await getLectures();
-      setLectures(fetchedLectures);
+      // Resolve signed URLs for lectures
+      const lecturesWithUrls = await Promise.all(fetchedLectures.map(async (l: any) => ({
+        ...l,
+        videoUrl: await getSignedUrl(l.videoUrl)
+      })));
+      setLectures(lecturesWithUrls);
 
       const fetchedQas = await getQas();
-      setQas(fetchedQas);
+      // Resolve signed URLs for QAs
+      const qasWithUrls = await Promise.all(fetchedQas.map(async (q: any) => ({
+        ...q,
+        pdfLink: await getSignedUrl(q.pdfLink)
+      })));
+      setQas(qasWithUrls);
 
       const settings = await getSiteSettings();
       if (settings) setSiteSettings(settings);
 
       const authorData = await getAboutAuthor();
-      if (authorData) setAboutAuthorData(authorData);
+      if (authorData) {
+        setAboutAuthorData({
+          ...authorData,
+          profilePic: await getSignedUrl(authorData.profilePic)
+        });
+      }
 
       const allAdminDoubts = await getAllAdminDoubts();
       setDoubts(allAdminDoubts);
@@ -170,6 +193,12 @@ export default function AdminDashboard() {
   };
 
   const handleDeleteNote = async (noteId: string) => {
+    const note = notes.find(n => n.id === noteId);
+    if (note) {
+      if (note.imageUrl) await deleteFromStorage(note.imageUrl);
+      if (note.paymentLink) await deleteFromStorage(note.paymentLink);
+      if (note.qaPdfLink) await deleteFromStorage(note.qaPdfLink);
+    }
     await deleteNote(noteId);
     showMessage('Note deleted.');
     fetchData();
@@ -179,27 +208,21 @@ export default function AdminDashboard() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 1000000) {
-      showMessage("File is too large (>1MB). Please compress it first or use a smaller file.");
-      return;
-    }
-
     setUploadingFile(true);
     try {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64String = reader.result as string;
+      const itemId = newNote.id || 'new';
+      const path = await uploadToStorage(file, 'notes/pdfs', itemId);
+      if (path) {
         if (isQaPdf) {
-          setNewNote(prev => ({ ...prev, qaPdfLink: base64String }));
+          setNewNote(prev => ({ ...prev, qaPdfLink: path }));
         } else {
-          setNewNote(prev => ({ ...prev, paymentLink: base64String }));
+          setNewNote(prev => ({ ...prev, paymentLink: path }));
         }
-        showMessage('File attached successfully.');
-        setUploadingFile(false);
-      };
-      reader.readAsDataURL(file);
+        showMessage('File uploaded successfully.');
+      }
     } catch (error: any) {
       showMessage(`Upload failed: ${error.message}`);
+    } finally {
       setUploadingFile(false);
     }
   };
@@ -208,22 +231,17 @@ export default function AdminDashboard() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 1000000) {
-      showMessage("Image is too large (>1MB).");
-      return;
-    }
-
     setUploadingFile(true);
     try {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setNewNote(prev => ({ ...prev, imageUrl: reader.result as string }));
-        showMessage('Image attached.');
-        setUploadingFile(false);
-      };
-      reader.readAsDataURL(file);
+      const itemId = newNote.id || 'new';
+      const path = await uploadToStorage(file, 'notes/covers', itemId);
+      if (path) {
+        setNewNote(prev => ({ ...prev, imageUrl: path }));
+        showMessage('Image uploaded.');
+      }
     } catch (error: any) {
       showMessage(`Image upload failed: ${error.message}`);
+    } finally {
       setUploadingFile(false);
     }
   };
@@ -234,9 +252,12 @@ export default function AdminDashboard() {
 
     setUploadingFile(true);
     try {
-      const url = await uploadFile(file, `lectures/${Date.now()}_${file.name}`);
-      setNewLecture(prev => ({ ...prev, videoUrl: url }));
-      showMessage('Video uploaded to storage.');
+      const itemId = newLecture.id || 'new';
+      const path = await uploadToStorage(file, 'lectures/videos', itemId);
+      if (path) {
+        setNewLecture(prev => ({ ...prev, videoUrl: path }));
+        showMessage('Video uploaded successfully.');
+      }
     } catch (error: any) {
       showMessage(`Video upload failed: ${error.message}`);
     } finally {
@@ -269,6 +290,8 @@ export default function AdminDashboard() {
   };
 
   const handleDeleteLecture = async (lectureId: string) => {
+    const lecture = lectures.find(l => l.id === lectureId);
+    if (lecture && lecture.videoUrl) await deleteFromStorage(lecture.videoUrl);
     await deleteLecture(lectureId);
     showMessage('Lecture deleted.');
     fetchData();
@@ -314,34 +337,31 @@ export default function AdminDashboard() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleDeleteQa = async (qaId: string) => {
-    await deleteQa(qaId);
-    showMessage('Q&A deleted.');
-    fetchData();
-  };
-
   const handleQaFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 1000000) {
-      showMessage("PDF is too large (>1MB).");
-      return;
-    }
-
     setUploadingFile(true);
     try {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setNewQa(prev => ({ ...prev, pdfLink: reader.result as string }));
-        showMessage('Q&A PDF attached.');
-        setUploadingFile(false);
-      };
-      reader.readAsDataURL(file);
+      const itemId = newQa.id || 'new';
+      const path = await uploadToStorage(file, 'qas/pdfs', itemId);
+      if (path) {
+        setNewQa(prev => ({ ...prev, pdfLink: path }));
+        showMessage('Q&A PDF uploaded.');
+      }
     } catch (error: any) {
       showMessage(`Upload failed: ${error.message}`);
+    } finally {
       setUploadingFile(false);
     }
+  };
+
+  const handleDeleteQa = async (qaId: string) => {
+    const qa = qas.find(q => q.id === qaId);
+    if (qa && qa.pdfLink) await deleteFromStorage(qa.pdfLink);
+    await deleteQa(qaId);
+    showMessage('Q&A deleted.');
+    fetchData();
   };
 
   const handleUpdateSettings = async (e: React.FormEvent) => {
@@ -1433,12 +1453,18 @@ export default function AdminDashboard() {
                         0, 0,
                         croppedAreaPixels.width, croppedAreaPixels.height
                       );
-                      const croppedBase64 = canvas.toDataURL('image/jpeg', 0.9);
-                      setAboutAuthorData((prev: any) => ({ ...prev, profilePic: croppedBase64 }));
-                      setCropImageSrc(null);
-                      showMessage('Profile picture cropped and attached.');
+                      
+                      const blob = await new Promise<Blob>((resolve) => canvas.toBlob(resolve!, 'image/jpeg', 0.9));
+                      const file = new File([blob], 'profile.jpg', { type: 'image/jpeg' });
+                      const path = await uploadToStorage(file, 'author', 'profile');
+                      
+                      if (path) {
+                        setAboutAuthorData((prev: any) => ({ ...prev, profilePic: path }));
+                        setCropImageSrc(null);
+                        showMessage('Profile picture uploaded.');
+                      }
                     } catch (err: any) {
-                      showMessage(`Crop failed: ${err.message}`);
+                      showMessage(`Upload failed: ${err.message}`);
                     } finally {
                       setUploadingProfilePic(false);
                     }

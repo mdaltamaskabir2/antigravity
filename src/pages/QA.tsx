@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { getQas, submitTransaction, getMyVerifiedTransactions, getSyllabusUnits } from '../lib/db';
+import { getQas, submitTransaction, getMyVerifiedTransactions, getSyllabusUnits, getSignedUrl } from '../lib/db';
 import { useAuth } from '../contexts/AuthContext';
 import { Link, useLocation } from 'react-router-dom';
 import { Document, Page, pdfjs } from 'react-pdf';
@@ -116,7 +116,12 @@ export default function QA() {
     async function fetchData() {
       try {
         const fetchedUnits = await getSyllabusUnits(); setUnits(fetchedUnits);
-        const fetchedQas = await getQas(); setQas(fetchedQas as Qa[]);
+        const fetchedQas = await getQas(); 
+        const qasWithUrls = await Promise.all(fetchedQas.map(async (q: any) => ({
+          ...q,
+          pdfLink: await getSignedUrl(q.pdfLink)
+        })));
+        setQas(qasWithUrls as Qa[]);
         if (currentUser) { const vTx = await getMyVerifiedTransactions(currentUser.id); setVerifiedQas(new Set(vTx.map((t: any) => t.noteId))); }
       } catch (error) { console.error("Error fetching data:", error); } finally { setLoading(false); }
     }
