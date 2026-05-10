@@ -154,11 +154,23 @@ export default function AdminDashboard() {
 
   const handleSaveNote = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Process price: remove '₹' and parse to number
+    const processedPrice = typeof newNote.price === 'string' 
+      ? parseFloat(newNote.price.replace(/[^\d.]/g, '')) || 0 
+      : newNote.price;
+
     const noteData = {
-      title: newNote.title, unitId: newNote.unitId, description: newNote.description,
-      freeContent: newNote.freeContent, qaFreeContent: newNote.qaFreeContent,
-      imageUrl: newNote.imageUrl, isPremium: newNote.isPremium, price: newNote.price,
-      paymentLink: newNote.paymentLink, qaPdfLink: newNote.qaPdfLink
+      title: newNote.title, 
+      unitId: newNote.unitId || null, // Convert empty string to null for UUID column
+      description: newNote.description,
+      freeContent: newNote.freeContent, 
+      qaFreeContent: newNote.qaFreeContent,
+      imageUrl: newNote.imageUrl, 
+      isPremium: newNote.isPremium, 
+      price: processedPrice,
+      paymentLink: newNote.paymentLink, 
+      qaPdfLink: newNote.qaPdfLink
     };
     if (newNote.id) {
       await updateNote(newNote.id, noteData);
@@ -267,11 +279,15 @@ export default function AdminDashboard() {
 
   const handleAddLecture = async (e: React.FormEvent) => {
     e.preventDefault();
+    const lectureData = {
+      ...newLecture,
+      unitId: newLecture.unitId || null // Convert empty string to null for UUID column
+    };
     if (newLecture.id) {
-      await updateLecture(newLecture.id, newLecture);
+      await updateLecture(newLecture.id, lectureData);
       showMessage('Lecture updated.');
     } else {
-      await addLecture(newLecture);
+      await addLecture(lectureData);
       showMessage('Lecture published.');
     }
     setNewLecture({ id: '', title: '', unitId: '', description: '', videoUrl: '' });
@@ -302,9 +318,13 @@ export default function AdminDashboard() {
     setUploadingFile(true);
     try {
       const qaData = {
-        title: newQa.title, unitId: newQa.unitId, description: newQa.description,
-        freeContent: newQa.freeContent, pdfLink: newQa.pdfLink,
-        isPremium: newQa.isPremium, price: newQa.price
+        title: newQa.title, 
+        unitId: newQa.unitId || null, // Convert empty string to null
+        description: newQa.description,
+        freeContent: newQa.freeContent, 
+        pdfLink: newQa.pdfLink,
+        isPremium: newQa.isPremium, 
+        price: newQa.price
       };
       if (newQa.id) {
         await updateQa(newQa.id, qaData);
